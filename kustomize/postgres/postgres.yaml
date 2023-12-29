@@ -1,27 +1,41 @@
 apiVersion: postgres-operator.crunchydata.com/v1beta1
 kind: PostgresCluster
 metadata:
-  name: hippo
+  name: ergo-postgres
 spec:
+  openshift: false
+  # supplementalGroups:
+  #   - 1001
   image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-15.5-0
   postgresVersion: 15
   instances:
     - name: instance1
       dataVolumeClaimSpec:
+        storageClassName: local-storage
         accessModes:
         - "ReadWriteOnce"
         resources:
           requests:
-            storage: 1Gi
+            storage: 5Gi
+        selector:
+          matchLabels:
+            app.kubernetes.io/name: postgres-op-volume
   backups:
     pgbackrest:
       image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.47-2
       repos:
       - name: repo1
+        schedules:
+          full: "0 1 * * 0"
+          differential: "0 1 * * 1-6"
         volume:
           volumeClaimSpec:
+            storageClassName: local-storage
             accessModes:
             - "ReadWriteOnce"
             resources:
               requests:
-                storage: 1Gi
+                storage: 5Gi
+            selector:
+             matchLabels:
+              app.kubernetes.io/name: postgres-op-volume-bk
